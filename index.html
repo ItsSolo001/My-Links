@@ -1193,7 +1193,7 @@
     modalCap.textContent = 'Image not found — check file name';
   });
 
-  /* ---------- Visitor counter (CounterAPI) ---------- */
+  /* ---------- Visitor counter (Tallywire) ---------- */
   (function () {
     const el = document.getElementById('visitorCount');
     if (!el) return;
@@ -1202,12 +1202,12 @@
     const NS  = 'itssolo001';
     const KEY = 'my-links';
 
-    const URL = 'https://api.counterapi.dev/v1/' + NS + '/' + KEY + '/up';
+    const URL = 'https://tallywire.cronpulse.workers.dev/hit/' + NS + '/' + KEY;
 
     fetch(URL, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(d => {
-        const n = Number(d.count ?? d.value ?? 0);
+        const n = Number(d.value ?? 0);
         el.textContent = isFinite(n) && n > 0
           ? n.toLocaleString('en-US')
           : '1';
