@@ -665,12 +665,118 @@
     transform:translate(2px, -2px);
   }
 
-  footer{
-    margin-top:18px;
+  /* ---------- footer + visitor counter ---------- */
+  footer.site-footer{
+    margin-top:24px;
+    padding-top:18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    position:relative;
     font-size:.66rem;
     color:rgba(255,255,255,.32);
     letter-spacing:.14em;
     text-transform:uppercase;
+  }
+
+  /* thin gradient line above the footer */
+  footer.site-footer::before{
+    content:"";
+    position:absolute;
+    top:0; left:12%; right:12%;
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+  }
+
+  .visitor-pill{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    padding:8px 15px 8px 12px;
+    border-radius:999px;
+    background:linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.10);
+    font-size:.68rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,.55);
+    isolation:isolate;
+    overflow:hidden;
+    transform:translateZ(0);
+    transition:
+      border-color .35s ease,
+      box-shadow .35s ease;
+  }
+
+  /* top light streak, same language as the card */
+  .visitor-pill::before{
+    content:"";
+    position:absolute;
+    left:22%; right:22%; top:0;
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.60), transparent);
+    opacity:.55;
+    pointer-events:none;
+  }
+
+  .visitor-pill:hover{
+    border-color:rgba(255,255,255,.30);
+    box-shadow:
+      0 0 18px -6px rgba(255,255,255,.35),
+      0 0 40px -14px rgba(255,255,255,.25);
+  }
+
+  .visitor-dot{
+    flex:0 0 auto;
+    width:6px; height:6px;
+    border-radius:50%;
+    background:#fff;
+    box-shadow:
+      0 0 8px #fff,
+      0 0 16px rgba(255,255,255,.55);
+    animation:pulseDot 2.4s ease-in-out infinite;
+  }
+  @keyframes pulseDot{
+    0%,100%{ opacity:1;   transform:scale(1);   }
+    50%    { opacity:.35; transform:scale(.7);  }
+  }
+
+  .visitor-label{
+    color:rgba(255,255,255,.42);
+  }
+
+  .visitor-count{
+    color:#fff;
+    font-weight:600;
+    font-size:.72rem;
+    letter-spacing:.06em;
+    font-variant-numeric:tabular-nums;   /* digits don't jitter */
+    text-shadow:0 0 12px rgba(255,255,255,.40);
+    min-width:2ch;
+    text-align:right;
+    transition:
+      color .3s ease,
+      text-shadow .3s ease;
+  }
+  .visitor-pill:hover .visitor-count{
+    color:#fff;
+    text-shadow:
+      0 0 14px rgba(255,255,255,.85),
+      0 0 28px rgba(255,255,255,.45);
+  }
+
+  .footer-copy{
+    font-size:.62rem;
+    color:rgba(255,255,255,.30);
+    letter-spacing:.18em;
+    text-transform:uppercase;
+  }
+
+  /* gentler pulse for folks who ask for less motion */
+  @media (prefers-reduced-motion: reduce){
+    .visitor-dot{ animation:none; }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -904,7 +1010,14 @@
       </button>
     </div>
 
-    <footer>© 2026 · Solo</footer>
+    <footer class="site-footer">
+      <div class="visitor-pill" role="status" aria-live="polite" aria-label="Site visitors">
+        <span class="visitor-dot" aria-hidden="true"></span>
+        <span class="visitor-label">Visitors</span>
+        <span class="visitor-count" id="visitorCount">··</span>
+      </div>
+      <p class="footer-copy">© 2026 · Solo</p>
+    </footer>
   </main>
 
   <!-- ============== DISCORD ACCOUNT PICKER ============== -->
@@ -1085,6 +1198,26 @@
   modalImg.addEventListener('error', () => {
     modalCap.textContent = 'Image not found — check file name';
   });
+
+  /* ---------- Visitor counter (hits.sh JSON) ---------- */
+  (function () {
+    const el   = document.getElementById('visitorCount');
+    const SITE = 'jelordvlademier1.github.io/my-links';
+
+    if (!el) return;
+
+    fetch('https://hits.sh/' + SITE + '.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => {
+        const n = Number(d.value ?? d.count ?? 0);
+        el.textContent = isFinite(n) ? n.toLocaleString('en-US') : '—';
+      })
+      .catch(() => {
+        // still register the visit even if JSON fetch is blocked
+        new Image().src = 'https://hits.sh/' + SITE + '.svg';
+        el.textContent = '—';
+      });
+  })();
 </script>
 </body>
 </html>
