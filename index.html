@@ -177,6 +177,7 @@
     font-family:inherit;
     isolation:isolate;
     transform:translateZ(0);
+    touch-action:manipulation;
     transition:
       transform .35s cubic-bezier(.2,.8,.2,1),
       border-color .35s ease,
@@ -327,6 +328,7 @@
     cursor:pointer;
     position:relative;
     overflow:hidden;
+    touch-action:manipulation;
     transition:
       color .35s ease, border-color .35s ease,
       background .35s ease, box-shadow .35s ease;
@@ -386,6 +388,7 @@
     overflow:hidden;
     isolation:isolate;
     transform:translateZ(0);
+    touch-action:manipulation;
     transition:
       transform .35s cubic-bezier(.2,.8,.2,1),
       border-color .35s ease,
@@ -539,6 +542,7 @@
     font-size:1rem;
     line-height:1;
     cursor:pointer;
+    touch-action:manipulation;
     transition:background .25s ease, transform .25s ease;
   }
   .modal-close:hover{
@@ -576,6 +580,7 @@
     overflow:hidden;
     isolation:isolate;
     transform:translateZ(0);
+    touch-action:manipulation;
     animation:optIn .4s cubic-bezier(.2,.8,.2,1) both;
     animation-delay:calc(60ms + var(--d) * 55ms);
     transition:
@@ -990,16 +995,22 @@
   /* ---------- Generic modal system ---------- */
   let lastFocus = null;
   let openModalEl = null;
+  let modalLockUntil = 0;   /* guards against mobile ghost clicks */
 
   function openModal(el){
     lastFocus = document.activeElement;
     el.hidden = false;
     document.body.style.overflow = 'hidden';
-    // focus first close button (or first focusable)
+
     const target = el.querySelector('.modal-close') || el.querySelector('[href],button');
     if (target) target.focus({ preventScroll:true });
+
     openModalEl = el;
+
+    /* swallow any clicks that arrive for the next 350ms */
+    modalLockUntil = Date.now() + 350;
   }
+
   function closeModal(){
     if (!openModalEl) return;
     openModalEl.hidden = true;
@@ -1008,7 +1019,12 @@
     openModalEl = null;
   }
 
-  /* delegate close clicks */
+  /* Helper: is the modal still in its "just opened" lockout? */
+  function isLocked(){
+    return Date.now() < modalLockUntil;
+  }
+
+  /* Delegate close clicks */
   document.addEventListener('click', (e) => {
     const closer = e.target.closest('[data-close]');
     if (closer && openModalEl) {
@@ -1028,14 +1044,20 @@
   document.querySelectorAll('[data-discord]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       openModal(discordModal);
     });
   });
 
-  /* close after choosing an account (link opens in new tab) */
+  /* Choosing an account — but ignore the ghost click right after opening */
   discordModal.querySelectorAll('.discord-option').forEach(opt => {
-    opt.addEventListener('click', () => {
-      // slight delay so the tap animation is visible
+    opt.addEventListener('click', (e) => {
+      if (isLocked()) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      /* let the link open in a new tab, then close after a beat */
       setTimeout(closeModal, 120);
     });
   });
@@ -1046,12 +1068,18 @@
   const modalCap = document.getElementById('qrCaption');
 
   document.querySelectorAll('[data-qr]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       modalImg.src = btn.dataset.qr;
       modalImg.alt = btn.textContent.trim();
       modalCap.textContent = btn.dataset.caption || '';
       openModal(qrModal);
     });
+  });
+
+  /* Also guard the QR image area in case a ghost tap tries to open it */
+  qrModal.querySelector('.modal-card').addEventListener('click', (e) => {
+    if (isLocked()) e.stopPropagation();
   });
 
   modalImg.addEventListener('error', () => {
