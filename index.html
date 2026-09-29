@@ -680,7 +680,6 @@
     text-transform:uppercase;
   }
 
-  /* thin gradient line above the footer */
   footer.site-footer::before{
     content:"";
     position:absolute;
@@ -710,7 +709,6 @@
       box-shadow .35s ease;
   }
 
-  /* top light streak, same language as the card */
   .visitor-pill::before{
     content:"";
     position:absolute;
@@ -752,7 +750,7 @@
     font-weight:600;
     font-size:.72rem;
     letter-spacing:.06em;
-    font-variant-numeric:tabular-nums;   /* digits don't jitter */
+    font-variant-numeric:tabular-nums;
     text-shadow:0 0 12px rgba(255,255,255,.40);
     min-width:2ch;
     text-align:right;
@@ -774,11 +772,7 @@
     text-transform:uppercase;
   }
 
-  /* gentler pulse for folks who ask for less motion */
-  @media (prefers-reduced-motion: reduce){
-    .visitor-dot{ animation:none; }
-  }
-
+  /* ---------- motion safety ---------- */
   @media (prefers-reduced-motion: reduce){
     *{ animation:none !important; transition:none !important; }
   }
@@ -1199,22 +1193,26 @@
     modalCap.textContent = 'Image not found — check file name';
   });
 
-  /* ---------- Visitor counter (hits.sh JSON) ---------- */
+  /* ---------- Visitor counter (CounterAPI) ---------- */
   (function () {
-    const el   = document.getElementById('visitorCount');
-    const SITE = 'jelordvlademier1.github.io/my-links';
-
+    const el = document.getElementById('visitorCount');
     if (!el) return;
 
-    fetch('https://hits.sh/' + SITE + '.json', { cache: 'no-store' })
+    /* pick any namespace/key — they just need to be unique to you */
+    const NS  = 'solo-links';
+    const KEY = 'jelord-main';
+
+    const URL = 'https://api.counterapi.dev/v1/' + NS + '/' + KEY + '/up';
+
+    fetch(URL, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(d => {
-        const n = Number(d.value ?? d.count ?? 0);
-        el.textContent = isFinite(n) ? n.toLocaleString('en-US') : '—';
+        const n = Number(d.count ?? d.value ?? 0);
+        el.textContent = isFinite(n) && n > 0
+          ? n.toLocaleString('en-US')
+          : '1';
       })
       .catch(() => {
-        // still register the visit even if JSON fetch is blocked
-        new Image().src = 'https://hits.sh/' + SITE + '.svg';
         el.textContent = '—';
       });
   })();
