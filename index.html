@@ -648,11 +648,21 @@ $$('[data-qr]').forEach(btn => {
     };
 
     if (app === 'gcash') {
-      openPaymentApp.href = 'gcash://';
+      const isAndroid = /android/i.test(navigator.userAgent);
+      if (isAndroid) {
+        openPaymentApp.href = 'intent://#Intent;scheme=gcash;package=com.globe.gcash.android;end';
+      } else {
+        openPaymentApp.href = 'gcash://';
+      }
       openPaymentApp.textContent = '↗ Open GCash';
       openPaymentApp.hidden = false;
     } else if (app === 'maribank') {
-      openPaymentApp.href = 'https://app.seabank.ph/app/';
+      const isAndroid = /android/i.test(navigator.userAgent);
+      if (isAndroid) {
+        openPaymentApp.href = 'intent://#Intent;scheme=maribank;package=ph.seabank.seabank;end';
+      } else {
+        openPaymentApp.href = 'maribank://';
+      }
       openPaymentApp.textContent = '↗ Open MariBank';
       openPaymentApp.hidden = false;
     } else if (app === 'binance') {
